@@ -1,0 +1,17 @@
+# Archivos de vídeo específicos del script
+video_dron.mp4
+output_dron.mp4
+
+# Todos los formatos de vídeo por extensión
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+
+# Entornos virtuales y caché de Python
+__pycache__/
+*.py[cod]
+.venv/
+env/
+venv/
