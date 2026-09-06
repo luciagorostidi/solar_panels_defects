@@ -12,7 +12,7 @@ VID_STRIDE = 3  # procesa 1 de cada 3 frames para ir mas rapido
 # 1. Tamaño del modelo
 model_size_mb = os.path.getsize(WEIGHTS_PATH) / (1024 * 1024) if os.path.exists(WEIGHTS_PATH) else 0.0
 
-# Cargar VUESTRO cerebro entrenado
+# Cargar cerebro entrenado
 model = YOLO(WEIGHTS_PATH)
 
 # FPS original del video, para que el output.mp4 se reproduzca a velocidad real
