@@ -6,7 +6,9 @@ Este subdirectorio recoge la prueba **SITL (Software In The Loop)** del proyecto
 
 La prueba funciona así:
 
-1. `detectar_SITL.py` se conecta por MAVLink al autopiloto simulado (SITL) y recibe su telemetría, incluida la **altitud relativa**.
+1. `detectar_SITL.py` se conecta por MAVLink al autopiloto simulado (SITL) y recibe su telemetría, incluida la **altitud relativa**. Soporta dos transportes con `--mavlink-proto`:
+   - `udp` (por defecto): mirror UDP "Inbound" de Mission Planner.
+   - `tcp`: cliente TCP directo a un puerto MAVLink de la SITL de ArduPilot (p. ej. `--mp-port 5762`, el puerto secundario que deja libre además del 5760 que suele usar Mission Planner). Es la forma verificada de probarlo en local: cuando Mission Planner lanza su propio simulador (pestaña *Simulation*), él se conecta por TCP al 5760 y dos puertos más (5762/5763) quedan libres para un segundo cliente MAVLink como este script.
 2. **Mientras el dron está por debajo de 2 metros de altitud, el vídeo/inferencia no se procesa**; en cuanto **supera los 2 metros, se activa** la captura, la inferencia YOLO sobre el vídeo y el streaming WebRTC.
 3. Cuando el modelo **detecta un defecto** durante el vuelo, se emite una alerta por **datagrama UDP en JSON** (con la clase detectada y la telemetría), dirigida al puerto donde escucha `server_alertas.py`.
 

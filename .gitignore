@@ -5,8 +5,9 @@
 *.mkv
 *.webm
 
-# Excepción: los vídeos de ejemplo sí se versionan (vía Git LFS, ver .gitattributes)
+# Excepción: los vídeos de ejemplo/resultado sí se versionan (vía Git LFS, ver .gitattributes)
 !video_dron.mp4
+!output_dron.mp4
 
 # Carpeta de pruebas y experimentos sueltos (repo Git independiente, no va a GitHub)
 /beta_test/

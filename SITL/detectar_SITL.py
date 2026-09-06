@@ -80,7 +80,7 @@ class AntiRepeticion:
 # ==============================================================================
 class EnlaceMavlink(threading.Thread):
     def __init__(self, *, target_ip, target_port, sysid, compid,
-                 altura_umbral, udp_alert_port):
+                 altura_umbral, udp_alert_port, mavlink_proto="udp"):
         super().__init__(daemon=True, name="EnlaceMavlink")
         self._target_ip = target_ip
         self._target_port = target_port
@@ -88,6 +88,7 @@ class EnlaceMavlink(threading.Thread):
         self._compid = compid
         self._altura_umbral = altura_umbral
         self._udp_alert_port = udp_alert_port
+        self._mavlink_proto = mavlink_proto
 
         self._telemetria = {
             "lat": 0.0,
@@ -132,9 +133,13 @@ class EnlaceMavlink(threading.Thread):
             pass
 
     def _abrir_conexion(self):
-        # udpout conecta directamente hacia la IP y puerto Inbound de Mission Planner
-        endpoint = f"udpout:{self._target_ip}:{self._target_port}"
-        print(f"[MAV] Iniciando conexión UDP hacia Mission Planner en {endpoint}...")
+        # udpout: conecta hacia el mirror UDP "Inbound" de Mission Planner.
+        # tcp: conecta directamente como cliente a un puerto MAVLink TCP de
+        # la SITL de ArduPilot (5762/5763 son los puertos secundarios que
+        # deja libres además del 5760, que suele usar Mission Planner).
+        prefijo = "tcp" if self._mavlink_proto == "tcp" else "udpout"
+        endpoint = f"{prefijo}:{self._target_ip}:{self._target_port}"
+        print(f"[MAV] Iniciando conexión {self._mavlink_proto.upper()} hacia {endpoint}...")
         self.master = mavutil.mavlink_connection(
             endpoint,
             source_system=self._sysid,
@@ -222,8 +227,16 @@ class EnlaceMavlink(threading.Thread):
 
             # 2. Procesar telemetría de posición entrante
             while True:
-                msg = self.master.recv_match(
-                    type=["GLOBAL_POSITION_INT", "ALTITUDE"], blocking=False)
+                try:
+                    msg = self.master.recv_match(
+                        type=["GLOBAL_POSITION_INT", "ALTITUDE"], blocking=False)
+                except (ConnectionResetError, OSError) as e:
+                    # En Windows, un socket UDP "conectado" puede lanzar
+                    # WinError 10054 (ConnectionResetError) si llega un ICMP
+                    # "puerto inalcanzable" de un envío anterior; no es fatal
+                    # para MAVLink sobre UDP, así que no se mata el hilo.
+                    print(f"[MAV] Aviso: error de red leyendo telemetría ({e}); reintentando...")
+                    break
                 if msg is None:
                     break
 
@@ -428,7 +441,11 @@ async def main():
     parser.add_argument("--mp-ip", type=str, default=MP_IP_DEFAULT,
                         help=f"IP del puesto de control / Mission Planner [Por defecto: {MP_IP_DEFAULT}]")
     parser.add_argument("--mp-port", type=int, default=MP_PORT_DEFAULT,
-                        help=f"Puerto UDP MAVLink de Mission Planner [Por defecto: {MP_PORT_DEFAULT}]")
+                        help=f"Puerto MAVLink de destino [Por defecto: {MP_PORT_DEFAULT}]")
+    parser.add_argument("--mavlink-proto", choices=["udp", "tcp"], default="udp",
+                        help="Transporte MAVLink: 'udp' (mirror Inbound de Mission Planner, "
+                             "por defecto) o 'tcp' (cliente directo a un puerto MAVLink TCP "
+                             "de la SITL de ArduPilot, p. ej. 5762/5763).")
     parser.add_argument("--udp-alert-port", type=int, default=UDP_ALERT_PORT_DEFAULT,
                         help=f"Puerto UDP de alertas JSON para Netcat [Por defecto: {UDP_ALERT_PORT_DEFAULT}]")
     parser.add_argument("--altura-min", type=float, default=ALTURA_ACTIVACION_DEFAULT,
@@ -448,7 +465,7 @@ async def main():
     print("      DETECCIÓN YOLO Y TELEMETRÍA — CONTROL POR ALTITUD (>2m)")
     print("=" * 75)
     print(f" • Origen de vídeo        : {source}")
-    print(f" • MAVLink Destino (GCS)  : udpout:{args.mp_ip}:{args.mp_port}")
+    print(f" • MAVLink Destino        : {args.mavlink_proto}:{args.mp_ip}:{args.mp_port}")
     print(f" • Alertas UDP JSON       : {args.mp_ip}:{args.udp_alert_port}")
     print(f" • Cota de activación     : >= {args.altura_min} metros relativos")
     print(f" • Ver WebRTC en directo  : {VIEW_URL}")
@@ -466,6 +483,7 @@ async def main():
             compid=199,
             altura_umbral=args.altura_min,
             udp_alert_port=args.udp_alert_port,
+            mavlink_proto=args.mavlink_proto,
         )
         enlace.start()
         enlace.esperar_listo(timeout=10)
