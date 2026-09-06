@@ -1,0 +1,26 @@
+# Requirements generales del repositorio: cubre las librerías de terceros que
+# usan los scripts Python de Test_Inicial_Frutas/, final_E4/, final/ y SITL/.
+# (No incluye beta_test/, que es una carpeta de pruebas aparte, ver su README.)
+
+# Entrenamiento / inferencia YOLO (Test_Inicial_Frutas, final_E4, SITL)
+ultralytics
+onnxruntime
+opencv-python
+numpy
+pyyaml
+
+# Métricas de rendimiento (final_E4)
+psutil
+
+# Alertas y telemetría MAVLink (final_E4, SITL)
+pymavlink
+
+# Streaming WebRTC hacia Cloudflare Stream (SITL)
+aiohttp
+aiortc
+
+# NOTA: final/detectar_video_metricas_hef.py necesita además "hailo_platform",
+# el SDK de Hailo (HailoRT) para ejecutar el modelo .hef en la NPU Hailo-8.
+# No está en PyPI: se instala aparte, junto con el runtime de Hailo, en el
+# dispositivo que tenga el acelerador conectado (p. ej. una Raspberry Pi con
+# el HAT Hailo-8). No es instalable en un PC normal sin ese hardware/SDK.

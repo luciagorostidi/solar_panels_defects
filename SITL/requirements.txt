@@ -1,0 +1,7 @@
+ultralytics
+onnxruntime
+opencv-python
+numpy
+aiohttp
+aiortc
+pymavlink

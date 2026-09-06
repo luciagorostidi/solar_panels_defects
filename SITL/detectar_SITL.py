@@ -4,7 +4,7 @@
 ==============================================================================
  prueba_stream.py — Detección YOLO + grabación local + streaming WebRTC
  Controlado por Altitud de Vuelo (> 2m) vía MAVLink hacia Mission Planner (Inbound)
- Emisión de Alertas: MAVLink STATUSTEXT + Datagrama UDP JSON (para Netcat)
+ Emisión de Alertas: Únicamente Datagrama UDP JSON (para Netcat)
 ==============================================================================
 """
 
@@ -80,7 +80,7 @@ class AntiRepeticion:
 # ==============================================================================
 class EnlaceMavlink(threading.Thread):
     def __init__(self, *, target_ip, target_port, sysid, compid,
-                 altura_umbral, udp_alert_port, severidad_num):
+                 altura_umbral, udp_alert_port):
         super().__init__(daemon=True, name="EnlaceMavlink")
         self._target_ip = target_ip
         self._target_port = target_port
@@ -88,7 +88,6 @@ class EnlaceMavlink(threading.Thread):
         self._compid = compid
         self._altura_umbral = altura_umbral
         self._udp_alert_port = udp_alert_port
-        self._severidad_num = severidad_num
 
         self._telemetria = {
             "lat": 0.0,
@@ -173,16 +172,7 @@ class EnlaceMavlink(threading.Thread):
         telem = item_alerta["telem"]
         timestamp_iso = datetime.now(timezone.utc).isoformat()
 
-        # 1. Envío de STATUSTEXT a Mission Planner
-        texto_mav = f"DEFECTO ({clase}) | Alt:{telem['alt_rel_m']:.1f}m"
-        datos_bytes = texto_mav.encode("utf-8")[:50]
-        try:
-            self.master.mav.statustext_send(self._severidad_num, datos_bytes)
-            print(f"[MAV] -> Alerta enviada a Mission Planner: {texto_mav}")
-        except Exception as e:
-            print(f"[MAV] Error enviando statustext: {e}")
-
-        # 2. Envío de datagrama UDP JSON para Netcat
+        # Envío de datagrama UDP JSON para Netcat (única vía de alerta; ver README)
         payload = {
             "timestamp": timestamp_iso,
             "evento": "DEFECTO_DETECTADO",
@@ -406,6 +396,24 @@ class YOLOStreamTrack(VideoStreamTrack):
 
 
 # ==============================================================================
+# Espera a que aiortc reúna todos los candidatos ICE antes de enviar el SDP:
+# WHIP (Cloudflare Stream) no usa trickle ICE, así que el offer tiene que
+# llevarlos ya todos o la conexión puede fallar de forma intermitente.
+# ==============================================================================
+async def _esperar_ice_completo(pc):
+    if pc.iceGatheringState == "complete":
+        return
+    fut = asyncio.get_event_loop().create_future()
+
+    @pc.on("icegatheringstatechange")
+    def _on_change():
+        if pc.iceGatheringState == "complete" and not fut.done():
+            fut.set_result(True)
+
+    await fut
+
+
+# ==============================================================================
 # EJECUCIÓN PRINCIPAL
 # ==============================================================================
 async def main():
@@ -458,7 +466,6 @@ async def main():
             compid=199,
             altura_umbral=args.altura_min,
             udp_alert_port=args.udp_alert_port,
-            severidad_num=mavutil.mavlink.MAV_SEVERITY_WARNING
         )
         enlace.start()
         enlace.esperar_listo(timeout=10)
@@ -471,8 +478,10 @@ async def main():
 
     offer = await pc.createOffer()
     await pc.setLocalDescription(offer)
+    await _esperar_ice_completo(pc)
 
-    async with aiohttp.ClientSession() as session:
+    connector = aiohttp.TCPConnector(ssl=False)
+    async with aiohttp.ClientSession(connector=connector) as session:
         async with session.post(
             WHIP_URL, data=pc.localDescription.sdp,
             headers={"Content-Type": "application/sdp"}

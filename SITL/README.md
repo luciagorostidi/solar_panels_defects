@@ -8,7 +8,7 @@ La prueba funciona así:
 
 1. `detectar_SITL.py` se conecta por MAVLink al autopiloto simulado (SITL) y recibe su telemetría, incluida la **altitud relativa**.
 2. **Mientras el dron está por debajo de 2 metros de altitud, el vídeo/inferencia no se procesa**; en cuanto **supera los 2 metros, se activa** la captura, la inferencia YOLO sobre el vídeo y el streaming WebRTC.
-3. Cuando el modelo **detecta un defecto** durante el vuelo, se emite una alerta: un `STATUSTEXT` MAVLink (visible en el panel de mensajes de Mission Planner) y un datagrama UDP en JSON con la clase detectada y la telemetría, dirigido al puerto donde escucha `server_alertas.py`.
+3. Cuando el modelo **detecta un defecto** durante el vuelo, se emite una alerta por **datagrama UDP en JSON** (con la clase detectada y la telemetría), dirigida al puerto donde escucha `server_alertas.py`.
 
 ### Por qué ONNX cuantizado (INT8) y no el HEF
 
@@ -17,10 +17,22 @@ El modelo que se usa aquí es el **ONNX cuantizado a INT8** (`solar_panels_yolo1
 ## Scripts Python
 
 ### `detectar_SITL.py`
-Detección YOLO + grabación local + streaming WebRTC, controlado por la altitud de vuelo (> 2 m) leída vía MAVLink desde Mission Planner. Carga el modelo `exported_models/solar_panels_yolo11n_int8.onnx` y procesa `video_dron.mp4` como entrada (`VIDEO_IN_DEFAULT`), generando `output_dron.mp4`. Al detectar un defecto, encola y emite la alerta por dos canales: `STATUSTEXT` MAVLink y datagrama UDP JSON (puerto 9000 por defecto) hacia `server_alertas.py`.
+Detección YOLO + grabación local + streaming WebRTC hacia Cloudflare Stream (WHIP), controlado por la altitud de vuelo (> 2 m) leída vía MAVLink desde Mission Planner. Carga el modelo `exported_models/solar_panels_yolo11n_int8.onnx` y procesa `video_dron.mp4` como entrada (`VIDEO_IN_DEFAULT`), generando `output_dron.mp4`. Al detectar un defecto, encola y emite una alerta por **datagrama UDP JSON** (puerto 9000 por defecto) hacia `server_alertas.py`.
+
+Sobre la conexión WebRTC a Cloudflare (`WHIP_URL`):
+- Antes de enviar el SDP al endpoint WHIP, el script espera a que `aiortc` termine de reunir **todos los candidatos ICE** (`_esperar_ice_completo`). Cloudflare Stream no usa *trickle ICE*, así que el offer tiene que llevarlos ya todos; sin esta espera la conexión podía fallar de forma intermitente.
+- La sesión HTTP que hace el POST del SDP se abre con verificación de certificado SSL **desactivada** (`aiohttp.TCPConnector(ssl=False)`), para que no haga falta tener un almacén de certificados (CA) actualizado en la máquina/Raspberry desde la que se ejecuta.
 
 ### `server_alertas.py`
 El **servidor de alertas**: un receptor UDP muy simple que escucha en el puerto 9000 (`0.0.0.0:9000`) y va imprimiendo por consola, en formato JSON legible, cada alerta que le llega desde `detectar_SITL.py`. Se ejecuta en paralelo (en otra consola, o en el PC que hace de estación de tierra de alertas) mientras corre `detectar_SITL.py`.
+
+## Instalación
+
+`requirements.txt` recoge las dependencias de Python necesarias para ejecutar `detectar_SITL.py` (`server_alertas.py` solo usa librería estándar):
+
+```
+pip install -r requirements.txt
+```
 
 ## Modelo y datos de ejemplo
 
