@@ -1,0 +1,23 @@
+# Todos los formatos de vídeo por extensión
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+
+# Excepción: los vídeos de ejemplo sí se versionan (vía Git LFS, ver .gitattributes)
+!video_dron.mp4
+
+# Carpeta de pruebas y experimentos sueltos (repo Git independiente, no va a GitHub)
+/beta_test/
+
+# Claude Code
+.claude/
+
+# Entornos virtuales y caché de Python
+__pycache__/
+*.py[cod]
+*.cache
+.venv/
+env/
+venv/

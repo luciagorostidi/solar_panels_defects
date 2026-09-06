@@ -1,0 +1,67 @@
+2026-08-30 19:44:26,005 [INFO] ============================================================
+2026-08-30 19:44:26,005 [INFO]   INICIANDO PIPELINE DE CONVERSION Y COMPILACION COMPLETA
+2026-08-30 19:44:26,005 [INFO] ============================================================
+2026-08-30 19:44:26,005 [INFO]   Fecha/hora:                 2026-08-30T19:44:26
+2026-08-30 19:44:26,005 [INFO]   Python:                     3.11.15
+2026-08-30 19:44:26,005 [INFO]   Etiqueta del modelo (--tag): paneles
+2026-08-30 19:44:26,005 [INFO]   Nombre base de salida:      paneles_yolo11n
+2026-08-30 19:44:26,006 [INFO]   Modo:                       a partir de pesos existentes
+2026-08-30 19:44:26,006 [INFO]   Pesos de partida:           /home/andres/hailo_workspace/solar/old_weights/best.pt
+2026-08-30 19:44:26,006 [INFO]   Carpeta origen (dataset):   /home/andres/hailo_workspace/solar
+2026-08-30 19:44:26,006 [INFO]   data.yaml:                  /home/andres/hailo_workspace/solar/data.yaml
+2026-08-30 19:44:26,006 [INFO]   Imagenes de calibracion:    /home/andres/hailo_workspace/solar/valid/images
+2026-08-30 19:44:26,006 [INFO]   Tamano de imagen:           640x640
+2026-08-30 19:44:26,006 [INFO]   Arquitectura Hailo:         hailo8
+2026-08-30 19:44:26,006 [INFO]   Directorio salida:          /home/andres/hailo_workspace/solar/new_models
+2026-08-30 19:44:26,006 [INFO]   Directorio logs:            /home/andres/hailo_workspace/logs
+2026-08-30 19:44:26,006 [INFO]   Archivo log de esta sesion: /home/andres/hailo_workspace/logs/paneles_pipeline_20260830_194426.log
+2026-08-30 19:44:26,006 [INFO] ============================================================
+2026-08-30 19:44:26,006 [INFO] 
+--- [Paso 1/6] Comprobaciones previas ---
+2026-08-30 19:44:26,006 [INFO]   OK  Carpeta origen encontrada: /home/andres/hailo_workspace/solar
+2026-08-30 19:44:26,006 [INFO]   OK  data.yaml encontrado: /home/andres/hailo_workspace/solar/data.yaml
+2026-08-30 19:44:26,007 [INFO]   OK  122 imagenes disponibles para calibracion en /home/andres/hailo_workspace/solar/valid/images (se usaran hasta 100)
+2026-08-30 19:44:26,007 [INFO]   OK  Pesos de partida encontrados: /home/andres/hailo_workspace/solar/old_weights/best.pt (5.23 MB)
+2026-08-30 19:44:26,007 [INFO]   Todas las comprobaciones previas OK, continuando...
+2026-08-30 19:44:34,696 [INFO] 
+--- [Paso 2/6] Preparando modelo PyTorch (.pt) ---
+2026-08-30 19:44:34,696 [INFO] Copiando modelo original (solo lectura) desde: /home/andres/hailo_workspace/solar/old_weights/best.pt
+2026-08-30 19:44:34,698 [INFO]   Copiado a: /home/andres/hailo_workspace/solar/new_models/paneles_yolo11n_best.pt
+2026-08-30 19:44:34,734 [INFO] ✓ PyTorch aislado en: /home/andres/hailo_workspace/solar/new_models/paneles_yolo11n_best.pt (5.23 MB)
+2026-08-30 19:44:34,734 [INFO]   Clases configuradas (3): {0: 'crack', 1: 'snow', 2: 'soiling'}
+2026-08-30 19:44:34,734 [INFO]   Arquitectura detectada en el checkpoint: yolo11n.pt
+2026-08-30 19:44:34,734 [INFO] 
+--- [Paso 3/6] Exportando a ONNX FP32 (opset=11) ---
+2026-08-30 19:44:34,734 [INFO]   Llamando a model.export(format='onnx', ...), puede tardar un momento...
+2026-08-30 19:44:36,645 [INFO] ✓ ONNX FP32 listo: /home/andres/hailo_workspace/solar/new_models/paneles_yolo11n.onnx (10.11 MB) en 1.91s
+2026-08-30 19:44:36,645 [INFO] 
+--- [Paso 4/6] Cuantizando grafo a ONNX INT8 ---
+2026-08-30 19:44:37,219 [INFO] ✓ ONNX INT8 listo: /home/andres/hailo_workspace/solar/new_models/paneles_yolo11n_int8.onnx (2.87 MB) en 0.57s
+2026-08-30 19:44:37,219 [INFO] 
+--- [Paso 5/6] Exportando a formato Edge NCNN ---
+2026-08-30 19:44:40,407 [INFO] ✓ NCNN listo: /home/andres/hailo_workspace/solar/new_models/paneles_yolo11n_ncnn (10.04 MB) en 3.19s
+2026-08-30 19:44:40,407 [INFO] 
+--- [Paso 6/6] Compilando a HEF para Hailo-8 (26 TOPS) ---
+2026-08-30 19:44:40,407 [INFO] Procesando 100 imagenes para el set de calibracion...
+2026-08-30 19:44:40,449 [INFO]   ...20/100 imagenes de calibracion procesadas
+2026-08-30 19:44:40,498 [INFO]   ...40/100 imagenes de calibracion procesadas
+2026-08-30 19:44:40,560 [INFO]   ...60/100 imagenes de calibracion procesadas
+2026-08-30 19:44:40,621 [INFO]   ...80/100 imagenes de calibracion procesadas
+2026-08-30 19:44:40,683 [INFO]   ...100/100 imagenes de calibracion procesadas
+2026-08-30 19:44:40,734 [INFO] ✓ Dataset calibracion guardado: /home/andres/hailo_workspace/solar/new_models/paneles_yolo11n_calib.npy (forma: (100, 640, 640, 3)) en 0.33s
+2026-08-30 19:44:40,734 [INFO] Inicializando ClientRunner(hw_arch='hailo8')...
+2026-08-30 19:44:40,752 [INFO] -> [DFC 1/4] Traduciendo grafo ONNX con 6 ramas convolucionales...
+2026-08-30 19:44:42,722 [INFO] ✓ Traduccion completada en 1.97s
+2026-08-30 19:44:42,722 [INFO] -> [DFC 2/4] Aplicando script ALLS de optimizacion y mapeo...
+2026-08-30 19:44:42,722 [INFO]   ALLS:
+normalization1 = normalization([0.0, 0.0, 0.0], [255.0, 255.0, 255.0])
+model_optimization_flavor(optimization_level=2)
+
+2026-08-30 19:44:42,743 [INFO] -> [DFC 3/4] Cuantizando pesos y activaciones a INT8 (puede tardar varios minutos)...
+2026-08-30 19:52:06,586 [INFO] ✓ Cuantizacion INT8 completada en 443.84s
+2026-08-30 19:52:06,586 [INFO] -> [DFC 4/4] Mapeando clusters y compilando binario HEF (puede tardar varios minutos)...
+2026-08-30 20:03:14,050 [INFO] ✓ Binario HEF listo: /home/andres/hailo_workspace/solar/new_models/paneles_yolo11n.hef (6.87 MB) en 667.46s
+2026-08-30 20:03:14,050 [INFO] 
+--- Generando fichero de etiquetas y metadatos ---
+2026-08-30 20:03:14,051 [INFO] ✓ Etiquetas (3): /home/andres/hailo_workspace/solar/new_models/paneles_yolo11n_labels.txt
+2026-08-30 20:03:14,051 [INFO] ✓ Metadatos: /home/andres/hailo_workspace/solar/new_models/paneles_yolo11n_metadata.json

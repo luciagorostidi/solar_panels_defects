@@ -1,0 +1,22 @@
+description: Ultralytics YOLO11n model trained on /content/Solar-panels-5/data.yaml
+author: Ultralytics
+date: '2026-08-30T19:44:37.343333+02:00'
+version: 8.4.132
+license: AGPL-3.0 License (https://ultralytics.com/license)
+docs: https://docs.ultralytics.com
+stride: 32
+task: detect
+head: Detect
+batch: 1
+imgsz:
+- 640
+- 640
+names:
+  0: crack
+  1: snow
+  2: soiling
+args:
+  batch: 1
+  quantize: null
+channels: 3
+end2end: false

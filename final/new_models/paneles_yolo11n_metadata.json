@@ -1,0 +1,14 @@
+{
+  "tag": "paneles",
+  "source_dir": "/home/andres/hailo_workspace/solar",
+  "weights_origen": "/home/andres/hailo_workspace/solar/old_weights/best.pt",
+  "hef": "paneles_yolo11n.hef",
+  "num_classes": 3,
+  "names": {
+    "0": "crack",
+    "1": "snow",
+    "2": "soiling"
+  },
+  "imgsz": 640,
+  "hw_arch": "hailo8"
+}

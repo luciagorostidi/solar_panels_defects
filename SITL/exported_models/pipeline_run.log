@@ -1,0 +1,32 @@
+2026-08-29 13:39:29,511 [INFO] ============================================================
+2026-08-29 13:39:29,511 [INFO]   INICIANDO PIPELINE DE CONVERSIÓN Y COMPILACIÓN COMPLETA
+2026-08-29 13:39:29,511 [INFO]   Directorio salida:  /home/andres/hailo_workspace/exported_models
+2026-08-29 13:39:29,511 [INFO]   Directorio logs:    /home/andres/hailo_workspace/logs
+2026-08-29 13:39:29,511 [INFO]   Archivo log sesión: /home/andres/hailo_workspace/logs/pipeline_20260829_133929.log
+2026-08-29 13:39:29,511 [INFO] ============================================================
+2026-08-29 13:39:36,786 [INFO] 
+--- [Paso 1/5] Preparando modelo PyTorch (.pt) ---
+2026-08-29 13:39:36,786 [INFO] Copiando modelo original (solo lectura) desde: /home/andres/hailo_workspace/old_models/best.pt
+2026-08-29 13:39:36,829 [INFO] ✓ PyTorch aislado en: /home/andres/hailo_workspace/exported_models/best.pt (5.23 MB)
+2026-08-29 13:39:36,829 [INFO]   Clases configuradas (3): {0: 'crack', 1: 'snow', 2: 'soiling'}
+2026-08-29 13:39:36,829 [INFO] 
+--- [Paso 2/5] Exportando a ONNX FP32 (opset=11) ---
+2026-08-29 13:39:39,285 [INFO] ✓ ONNX FP32 listo: /home/andres/hailo_workspace/exported_models/solar_panels_yolo11n.onnx (10.11 MB) en 2.46s
+2026-08-29 13:39:39,285 [INFO] 
+--- [Paso 3/5] Cuantizando grafo a ONNX INT8 ---
+2026-08-29 13:39:39,661 [INFO] ✓ ONNX INT8 listo: /home/andres/hailo_workspace/exported_models/solar_panels_yolo11n_int8.onnx (2.87 MB) en 0.38s
+2026-08-29 13:39:39,661 [INFO] 
+--- [Paso 4/5] Exportando a formato Edge NCNN ---
+2026-08-29 13:39:42,913 [INFO] ✓ NCNN listo: /home/andres/hailo_workspace/exported_models/solar_panels_yolo11n_ncnn (10.04 MB) en 3.25s
+2026-08-29 13:39:42,913 [INFO] 
+--- [Paso 5/5] Compilando a HEF para Hailo-8 (26 TOPS) ---
+2026-08-29 13:39:42,914 [INFO] Procesando 100 imágenes para el set de calibración...
+2026-08-29 13:39:43,131 [INFO] ✓ Dataset calibración guardado: /home/andres/hailo_workspace/exported_models/calib.npy (forma: (100, 640, 640, 3))
+2026-08-29 13:39:43,131 [INFO] Inicializando ClientRunner(hw_arch='hailo8')...
+2026-08-29 13:39:43,142 [INFO] -> [DFC 1/4] Traduciendo grafo ONNX con 6 ramas convolucionales...
+2026-08-29 13:39:45,480 [INFO] ✓ Traducción completada en 2.34s
+2026-08-29 13:39:45,481 [INFO] -> [DFC 2/4] Aplicando script ALLS de optimización y mapeo...
+2026-08-29 13:39:45,502 [INFO] -> [DFC 3/4] Cuantizando pesos y activaciones a INT8...
+2026-08-29 13:41:32,626 [INFO] ✓ Cuantización INT8 completada en 107.12s
+2026-08-29 13:41:32,626 [INFO] -> [DFC 4/4] Mapeando clusters y compilando binario HEF...
+2026-08-29 13:52:23,581 [INFO] ✓ Binario HEF listo: /home/andres/hailo_workspace/exported_models/solar_panels_yolo11n.hef (6.81 MB) en 650.95s
